@@ -5,21 +5,25 @@ import com.aruiz.loans.loans.domain.Loan;
 import com.aruiz.loans.loans.domain.Payment;
 import com.aruiz.loans.loans.domain.LoanRepository;
 import com.aruiz.loans.shared.domain.factory.RandomIntegerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.Iterator;
 import java.util.List;
 
+@Service
 public class LoanService {
     private final LoanRepository repository;
     private final int ID_FACTORY_MAX_BOUND = 10000;
 
+    @Autowired
     public LoanService(LoanRepository repository) {
         this.repository = repository;
     }
 
-    public Loan generateLoan(InterestType interestType, Double amount, int weekTerms, Double rate) {
+    public Loan generateLoan(InterestType interestType, Double amount, int weekTerms, Double rate) throws Exception {
         if (weekTerms < 4)
             weekTerms = 4; // use as default a month
         else if (weekTerms > 52)
@@ -42,11 +46,14 @@ public class LoanService {
     }
 
     private double calculateInterest(InterestType interestType, Double amount, int weekTerms, Double rate) {
+        // Using weekTerms/52 as t in the equation as formulas require years.
+        double timeYear = weekTerms/52d;
         rate /= 100;
         // Simple interest formula:
         // A = P(1+rt)
-        if (interestType == InterestType.SIMPLE)
-            return amount * (1 + rate*(weekTerms/52d));
+        if (interestType == InterestType.SIMPLE) {
+            return amount * (1 + rate*(timeYear));
+        }
 
         double compoundPeriods = 1;
         switch (interestType) {
@@ -56,7 +63,6 @@ public class LoanService {
 
         // Compound interest formula
         // A = P(1+r/n)^nt
-        // Using weekTerms/52 as t in equation as formula requires years.
-        return amount * Math.pow(1 + rate/compoundPeriods, compoundPeriods*(weekTerms/52d));
+        return amount * Math.pow(1 + rate/compoundPeriods, compoundPeriods*(timeYear));
     }
 }
