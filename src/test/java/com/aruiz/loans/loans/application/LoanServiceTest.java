@@ -35,7 +35,8 @@ public class LoanServiceTest {
     @MethodSource("generateLoanTestValues")
     void testGenerateLoan(GenerateLoanArgs args, Double expAmount, int expTotalTerms) {
         try {
-            Loan loan = service.generateLoan(args.interestType, args.amount, args.weekTerms, args.rate);
+            GenerateLoan generateLoan = new GenerateLoan(args.interestType.name(), args.amount, args.weekTerms, args.rate);
+            Loan loan = service.generateLoan(generateLoan);
             assertEquals(expAmount, loan.getPayments().get(0).amount());
             assertEquals(expTotalTerms, loan.getPayments().size());
             assertNotEquals(0, loan.getId());

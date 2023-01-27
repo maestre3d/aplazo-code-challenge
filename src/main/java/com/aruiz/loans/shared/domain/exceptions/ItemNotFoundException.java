@@ -1,6 +1,6 @@
 package com.aruiz.loans.shared.domain.exceptions;
 
-public class ItemNotFoundException extends Exception {
+public class ItemNotFoundException extends RuntimeException {
     private final String itemName;
 
     public ItemNotFoundException(String itemName) {

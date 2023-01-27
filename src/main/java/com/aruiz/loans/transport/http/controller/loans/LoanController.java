@@ -1,16 +1,17 @@
 package com.aruiz.loans.transport.http.controller.loans;
 
+import com.aruiz.loans.loans.application.GenerateLoan;
 import com.aruiz.loans.loans.application.LoanService;
-import com.aruiz.loans.loans.domain.InterestType;
 import com.aruiz.loans.loans.domain.Loan;
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.aruiz.loans.shared.domain.exceptions.ItemNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.Serializable;
-import java.util.HashMap;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
+@RequestMapping("/loans")
 public class LoanController {
     private final LoanService service;
 
@@ -19,14 +20,23 @@ public class LoanController {
         this.service = service;
     }
 
-    private record GenerateLoanBody (@JsonAlias("interest_type") String interestType,
-                                     Double amount, @JsonAlias("week_terms") int terms,
-                                     Double rate) implements Serializable {
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Loan generateLoan(@RequestBody @Valid GenerateLoan request) throws Exception {
+        try {
+            return service.generateLoan(request);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "interest_type has an invalid format, expected [SIMPLE,ANNUALLY_COMPOUND,WEEKLY_COMPOUND,MONTHLY_COMPOUND]");
+        }
     }
 
-    @PostMapping("/loans/generate")
-    public Loan generateLoan(@RequestBody GenerateLoanBody request) throws Exception {
-        return service.generateLoan(InterestType.valueOf(request.interestType), request.amount,
-                request.terms, request.rate);
+    @GetMapping("/{loan_id}")
+    public Loan getLoanById(@PathVariable(value = "loan_id") String loanId) throws Exception {
+        try {
+            return service.getLoan(Integer.parseInt(loanId));
+        } catch (ItemNotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.toString(), ex);
+        }
     }
 }
