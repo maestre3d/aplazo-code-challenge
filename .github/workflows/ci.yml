@@ -19,4 +19,5 @@ permissions:
 
 jobs:
   test-build:
+    name: Test and Build
     uses: ./.github/workflows/test-build.yml
